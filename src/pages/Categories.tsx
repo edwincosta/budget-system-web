@@ -2,21 +2,21 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axiosInstance from '../axiosConfig';
 import { Button, Form, Modal, Table, Container, Row, Col } from 'react-bootstrap';
-import { Budget } from '../models/Budget';
-import { Category } from '../models/Category';
+import { IBudget } from 'budget-system-shared/src/models/Budget';
+import { ICategory } from 'budget-system-shared/src/models/Category';
 
 const Categories: React.FC = () => {
     const { budgetId } = useParams<{ budgetId: string }>();
-    const emptyNewCategory: Category = {
+    const emptyNewCategory: ICategory = {
         name: '',
         budget: budgetId || '',
         amount: 0,
         subcategories: []
     };
 
-    const [budget, setBudget] = useState<Budget | null>(null);
-    const [categories, setCategories] = useState<Category[]>([]);
-    const [newCategory, setNewCategory] = useState<Category>(emptyNewCategory);
+    const [budget, setBudget] = useState<IBudget | null>(null);
+    const [categories, setCategories] = useState<ICategory[]>([]);
+    const [newCategory, setNewCategory] = useState<ICategory>(emptyNewCategory);
     const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isEditMode, setIsEditMode] = useState(false);
@@ -36,7 +36,7 @@ const Categories: React.FC = () => {
 
     const fetchBudget = async (budgetId: string) => {
         try {
-            const response = await axiosInstance.get<Budget>(`/budgets/${budgetId}`);
+            const response = await axiosInstance.get<IBudget>(`/budgets/${budgetId}`);
             setBudget(response.data);
         } catch (error) {
             console.error('Error fetching categories:', error);
@@ -45,7 +45,7 @@ const Categories: React.FC = () => {
 
     const fetchCategories = async (budgetId: string) => {
         try {
-            const response = await axiosInstance.get<Category[]>(`/categories?budget=${budgetId}`);
+            const response = await axiosInstance.get<ICategory[]>(`/categories?budget=${budgetId}`);
             setCategories(response.data);
         } catch (error) {
             console.error('Error fetching categories:', error);
@@ -54,7 +54,7 @@ const Categories: React.FC = () => {
 
     const handleCreateCategory = async () => {
         try {
-            const response = await axiosInstance.post<Category>('/categories', { ...newCategory, budget: budgetId });
+            const response = await axiosInstance.post<ICategory>('/categories', { ...newCategory, budget: budgetId });
             setCategories([...categories, response.data]);
             setNewCategory(emptyNewCategory);
             setIsModalOpen(false);
@@ -66,7 +66,7 @@ const Categories: React.FC = () => {
     const handleUpdateCategory = async () => {
         if (!selectedCategoryId) return;
         try {
-            const response = await axiosInstance.put<Category>(`/categories/${selectedCategoryId}`, newCategory);
+            const response = await axiosInstance.put<ICategory>(`/categories/${selectedCategoryId}`, newCategory);
             setCategories(categories.map(category => (category._id === selectedCategoryId ? response.data : category)));
             setIsModalOpen(false);
         } catch (error) {
@@ -89,7 +89,7 @@ const Categories: React.FC = () => {
         setIsModalOpen(true);
     };
 
-    const openEditModal = (category: Category) => {
+    const openEditModal = (category: ICategory) => {
         setNewCategory(category);
         setSelectedCategoryId(category._id || null);
         setIsEditMode(true);

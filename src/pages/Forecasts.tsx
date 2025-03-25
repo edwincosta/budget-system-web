@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import axiosInstance from '../axiosConfig';
 import { Button, Form, Modal, Table, Container, Row, Col } from 'react-bootstrap';
-import { Forecast } from '../models/Forecast';
+import { IForecast } from 'budget-system-shared/src/models/Forecast';
 
 const Forecasts: React.FC = () => {
-    const [forecasts, setForecasts] = useState<Forecast[]>([]);
-    const [newForecast, setNewForecast] = useState<Forecast>({ name: '', budgets: [], users: [] });
+    const [forecasts, setForecasts] = useState<IForecast[]>([]);
+    const [newForecast, setNewForecast] = useState<IForecast>({ name: '', budgets: [], users: [] });
     const [selectedForecastId, setSelectedForecastId] = useState<string | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isEditMode, setIsEditMode] = useState(false);
@@ -16,7 +16,7 @@ const Forecasts: React.FC = () => {
 
     const fetchForecasts = async () => {
         try {
-            const response = await axiosInstance.get<Forecast[]>('/forecasts');
+            const response = await axiosInstance.get<IForecast[]>('/forecasts');
             setForecasts(response.data);
         } catch (error) {
             console.error('Error fetching forecasts:', error);
@@ -26,7 +26,7 @@ const Forecasts: React.FC = () => {
     const handleCreateForecast = async () => {
         try {
             const { _id, ...forecastWithoutId } = newForecast;
-            const response = await axiosInstance.post<Forecast>('/forecasts', forecastWithoutId);
+            const response = await axiosInstance.post<IForecast>('/forecasts', forecastWithoutId);
             setForecasts([...forecasts, response.data]);
             setNewForecast({ name: '', budgets: [], users: [] });
             setIsModalOpen(false);
@@ -43,7 +43,7 @@ const Forecasts: React.FC = () => {
     const handleUpdateForecast = async () => {
         if (!selectedForecastId) return;
         try {
-            const response = await axiosInstance.put<Forecast>(`/forecasts/${selectedForecastId}`, newForecast);
+            const response = await axiosInstance.put<IForecast>(`/forecasts/${selectedForecastId}`, newForecast);
             setForecasts(forecasts.map(forecast => (forecast._id === selectedForecastId ? response.data : forecast)));
             setIsModalOpen(false);
         } catch (error) {
@@ -66,7 +66,7 @@ const Forecasts: React.FC = () => {
         setIsModalOpen(true);
     };
 
-    const openEditModal = (forecast: Forecast) => {
+    const openEditModal = (forecast: IForecast) => {
         setNewForecast(forecast);
         setSelectedForecastId(forecast._id || null);
         setIsEditMode(true);

@@ -2,21 +2,21 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import axiosInstance from '../axiosConfig';
 import { Button, Form, Modal, Table, Container, Row, Col } from 'react-bootstrap';
-import { Category } from '../models/Category';
-import { Subcategory } from '../models/Subcategory';
+import { ICategory } from 'budget-system-shared/src/models/Category';
+import { ISubcategory } from 'budget-system-shared/src/models/Subcategory';
 
 const Subcategories: React.FC = () => {
     const { categoryId } = useParams<{ categoryId: string }>();
-    const emptyNewSubcategory: Subcategory = {
+    const emptyNewSubcategory: ISubcategory = {
         name: '',
         amount: 0,
         isPersonal: false,
         category: categoryId || ''
     };
 
-    const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
-    const [category, setCategory] = useState<Category | null>(null);
-    const [newSubcategory, setNewSubcategory] = useState<Subcategory>(emptyNewSubcategory);
+    const [subcategories, setSubcategories] = useState<ISubcategory[]>([]);
+    const [category, setCategory] = useState<ICategory | null>(null);
+    const [newSubcategory, setNewSubcategory] = useState<ISubcategory>(emptyNewSubcategory);
     const [selectedSubcategoryId, setSelectedSubcategoryId] = useState<string | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isEditMode, setIsEditMode] = useState(false);
@@ -35,7 +35,7 @@ const Subcategories: React.FC = () => {
 
     const fetchCategory = async (categoryId: string) => {
         try {
-            const response = await axiosInstance.get<Category>(`/categories/${categoryId}`);
+            const response = await axiosInstance.get<ICategory>(`/categories/${categoryId}`);
             setCategory(response.data);
         } catch (error) {
             console.error('Error fetching categories:', error);
@@ -44,7 +44,7 @@ const Subcategories: React.FC = () => {
 
     const fetchSubcategories = async (categoryId: string) => {
         try {
-            const response = await axiosInstance.get<Subcategory[]>(`/categories/${categoryId}/subcategories`);
+            const response = await axiosInstance.get<ISubcategory[]>(`/categories/${categoryId}/subcategories`);
             setSubcategories(response.data);
         } catch (error) {
             console.error('Error fetching subcategories:', error);
@@ -53,7 +53,7 @@ const Subcategories: React.FC = () => {
 
     const handleCreateSubcategory = async () => {
         try {
-            const response = await axiosInstance.post<Subcategory>(`/categories/${categoryId}/subcategories`, { ...newSubcategory, category: categoryId });
+            const response = await axiosInstance.post<ISubcategory>(`/categories/${categoryId}/subcategories`, { ...newSubcategory, category: categoryId });
             setSubcategories([...subcategories, response.data]);
             setNewSubcategory(emptyNewSubcategory);
             setIsModalOpen(false);
@@ -68,7 +68,7 @@ const Subcategories: React.FC = () => {
     const handleUpdateSubcategory = async () => {
         if (!selectedSubcategoryId) return;
         try {
-            const response = await axiosInstance.put<Subcategory>(`/categories/subcategories/${selectedSubcategoryId}`, newSubcategory);
+            const response = await axiosInstance.put<ISubcategory>(`/categories/subcategories/${selectedSubcategoryId}`, newSubcategory);
             setSubcategories(subcategories.map(subcategory => (subcategory._id === selectedSubcategoryId ? response.data : subcategory)));
             setIsModalOpen(false);
             if (categoryId) {
@@ -97,7 +97,7 @@ const Subcategories: React.FC = () => {
         setIsModalOpen(true);
     };
 
-    const openEditModal = (subcategory: Subcategory) => {
+    const openEditModal = (subcategory: ISubcategory) => {
         setNewSubcategory(subcategory);
         setSelectedSubcategoryId(subcategory._id || null);
         setIsEditMode(true);

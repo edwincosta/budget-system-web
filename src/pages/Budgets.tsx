@@ -2,11 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axiosInstance from '../axiosConfig';
 import { Button, Form, Modal, Table, Container, Row, Col } from 'react-bootstrap';
-import { Forecast } from '../models/Forecast';
-import { Budget } from '../models/Budget';
+import { IForecast } from 'budget-system-shared/src/models/Forecast';
+import { IBudget } from 'budget-system-shared/src/models/Budget';
 
 const Budgets: React.FC = () => {
-    const emptyNewBudget: Budget = {
+    const emptyNewBudget: IBudget = {
         type: 'Betel',
         month: new Date().getMonth() + 1,
         year: new Date().getFullYear(),
@@ -14,10 +14,10 @@ const Budgets: React.FC = () => {
         forecast: ''
     };
 
-    const [forecasts, setForecasts] = useState<Forecast[]>([]);
+    const [forecasts, setForecasts] = useState<IForecast[]>([]);
     const [selectedForecastId, setSelectedForecastId] = useState<string | null>(null);
-    const [budgets, setBudgets] = useState<Budget[]>([]);
-    const [newBudget, setNewBudget] = useState<Budget>(emptyNewBudget);
+    const [budgets, setBudgets] = useState<IBudget[]>([]);
+    const [newBudget, setNewBudget] = useState<IBudget>(emptyNewBudget);
     const [selectedBudgetId, setSelectedBudgetId] = useState<string | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isEditMode, setIsEditMode] = useState(false);
@@ -36,7 +36,7 @@ const Budgets: React.FC = () => {
 
     const fetchForecasts = async () => {
         try {
-            const response = await axiosInstance.get<Forecast[]>('/forecasts');
+            const response = await axiosInstance.get<IForecast[]>('/forecasts');
             setForecasts(response.data);
         } catch (error) {
             console.error('Error fetching forecasts:', error);
@@ -45,7 +45,7 @@ const Budgets: React.FC = () => {
 
     const fetchBudgets = async (forecastId: string) => {
         try {
-            const response = await axiosInstance.get<Budget[]>(`/budgets?forecast=${forecastId}`);
+            const response = await axiosInstance.get<IBudget[]>(`/budgets?forecast=${forecastId}`);
             setBudgets(response.data);
         } catch (error) {
             console.error('Error fetching budgets:', error);
@@ -54,7 +54,7 @@ const Budgets: React.FC = () => {
 
     const handleCreateBudget = async () => {
         try {
-            const response = await axiosInstance.post<Budget>('/budgets', { ...newBudget, forecast: selectedForecastId });
+            const response = await axiosInstance.post<IBudget>('/budgets', { ...newBudget, forecast: selectedForecastId });
             setBudgets([...budgets, response.data]);
             setNewBudget(emptyNewBudget);
             setIsModalOpen(false);
@@ -74,7 +74,7 @@ const Budgets: React.FC = () => {
     const handleUpdateBudget = async () => {
         if (!selectedBudgetId) return;
         try {
-            const response = await axiosInstance.put<Budget>(`/budgets/${selectedBudgetId}`, newBudget);
+            const response = await axiosInstance.put<IBudget>(`/budgets/${selectedBudgetId}`, newBudget);
             setBudgets(budgets.map(budget => (budget._id === selectedBudgetId ? response.data : budget)));
             setIsModalOpen(false);
             if (selectedForecastId) {
@@ -109,7 +109,7 @@ const Budgets: React.FC = () => {
 
     const handleDuplicateBudget = async (id: string) => {
         try {
-            const response = await axiosInstance.post<Budget>(`/budgets/${id}/duplicate`);
+            const response = await axiosInstance.post<IBudget>(`/budgets/${id}/duplicate`);
             setBudgets([...budgets, response.data]);
             if (selectedForecastId) {
                 fetchBudgets(selectedForecastId);
@@ -130,7 +130,7 @@ const Budgets: React.FC = () => {
         setIsModalOpen(true);
     };
 
-    const openEditModal = (budget: Budget) => {
+    const openEditModal = (budget: IBudget) => {
         setNewBudget(budget);
         setSelectedBudgetId(budget._id || null);
         setIsEditMode(true);

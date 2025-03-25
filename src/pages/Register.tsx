@@ -15,7 +15,7 @@ const Register: React.FC = () => {
       const response = await axios.post<{ success: boolean }>(`${config.apiBaseUrl}/auth/register`, { name, password, email });
       if (response.status === 201) {
         alert('Registration successful');
-        navigate('/login');
+        navigate('/');
       } else {
         alert('Registration failed');
       }
