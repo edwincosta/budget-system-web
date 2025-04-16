@@ -26,8 +26,6 @@ const CustomNavbar: React.FC = () => {
           <Nav className="me-auto" onSelect={handleSelect}>
             <Nav.Link as={Link} to="/new-expense" onClick={handleSelect}>New Expense</Nav.Link>
             <Nav.Link as={Link} to="/forecasts" onClick={handleSelect}>Forecasts</Nav.Link>
-            <Nav.Link as={Link} to="/budgets" onClick={handleSelect}>Budgets</Nav.Link>
-            <Nav.Link as={Link} to="/reports" onClick={handleSelect}>Reports</Nav.Link>
           </Nav>
           <Button variant="outline-danger" onClick={handleLogout}>Logout</Button>
         </Navbar.Collapse>

@@ -2,84 +2,122 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axiosInstance from '../axiosConfig';
 import { Button, Form, Modal, Table, Container, Row, Col } from 'react-bootstrap';
-import { IBudget } from 'budget-system-shared/src/models/Budget';
-import { ICategory } from 'budget-system-shared/src/models/Category';
+import { ApiResponse, IMonthlyBudget, ICategory } from 'budget-system-shared';
 
 const Categories: React.FC = () => {
-    const { budgetId } = useParams<{ budgetId: string }>();
+    const { forecastId, budgetId } = useParams<{ forecastId: string; budgetId: string }>();
     const emptyNewCategory: ICategory = {
         name: '',
-        budget: budgetId || '',
-        amount: 0,
-        subcategories: []
+        categoryBudget: 0,
+        monthlyBudget: budgetId || '',
+        subcategories: [],
     };
 
-    const [budget, setBudget] = useState<IBudget | null>(null);
+    const [monthlyBudget, setMonthlyBudget] = useState<IMonthlyBudget | null>(null);
     const [categories, setCategories] = useState<ICategory[]>([]);
     const [newCategory, setNewCategory] = useState<ICategory>(emptyNewCategory);
     const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isEditMode, setIsEditMode] = useState(false);
+    const [error, setError] = useState<string | null>(null);
     const navigate = useNavigate();
 
     useEffect(() => {
-        if (budgetId) {
-            fetchBudget(budgetId);
+        if (forecastId && budgetId) {
+            fetchMonthlyBudget(forecastId, budgetId);
+            fetchCategories(forecastId, budgetId);
         }
-    }, [budgetId]);
+    }, [forecastId, budgetId]);
 
-    useEffect(() => {
-        if (budgetId) {
-            fetchCategories(budgetId);
-        }
-    }, [budgetId]);
-
-    const fetchBudget = async (budgetId: string) => {
+    const fetchMonthlyBudget = async (forecastId: string, budgetId: string) => {
         try {
-            const response = await axiosInstance.get<IBudget>(`/budgets/${budgetId}`);
-            setBudget(response.data);
+            const response = await axiosInstance.get<ApiResponse<IMonthlyBudget>>(
+                `/forecasts/${forecastId}/budgets/${budgetId}`
+            );
+            if (response.data.success && response.data.data) {
+                setMonthlyBudget(response.data.data);
+            } else {
+                setError(response.data.message || 'Failed to fetch budget');
+            }
         } catch (error) {
-            console.error('Error fetching categories:', error);
+            setError('An error occurred while fetching the budget');
+            console.error('Error fetching budget:', error);
         }
     };
 
-    const fetchCategories = async (budgetId: string) => {
+    const fetchCategories = async (forecastId: string, budgetId: string) => {
         try {
-            const response = await axiosInstance.get<ICategory[]>(`/categories?budget=${budgetId}`);
-            setCategories(response.data);
+            const response = await axiosInstance.get<ApiResponse<ICategory[]>>(
+                `/forecasts/${forecastId}/budgets/${budgetId}/categories`
+            );
+            if (response.data.success && response.data.data) {
+                setCategories(response.data.data);
+            } else {
+                setError(response.data.message || 'Failed to fetch categories');
+            }
         } catch (error) {
+            setError('An error occurred while fetching categories');
             console.error('Error fetching categories:', error);
         }
     };
 
     const handleCreateCategory = async () => {
         try {
-            const response = await axiosInstance.post<ICategory>('/categories', { ...newCategory, budget: budgetId });
-            setCategories([...categories, response.data]);
-            setNewCategory(emptyNewCategory);
-            setIsModalOpen(false);
+            const response = await axiosInstance.post<ApiResponse<ICategory>>(
+                `/forecasts/${forecastId}/budgets/${budgetId}/categories`,
+                { ...newCategory, budget: budgetId }
+            );
+            if (response.data.success && response.data.data) {
+                setCategories([...categories, response.data.data]);
+                setNewCategory(emptyNewCategory);
+                setIsModalOpen(false);
+            } else {
+                alert(response.data.message || 'Failed to create category');
+            }
         } catch (error) {
             console.error('Error creating category:', error);
+            alert('An error occurred while creating the category');
         }
     };
 
     const handleUpdateCategory = async () => {
         if (!selectedCategoryId) return;
         try {
-            const response = await axiosInstance.put<ICategory>(`/categories/${selectedCategoryId}`, newCategory);
-            setCategories(categories.map(category => (category._id === selectedCategoryId ? response.data : category)));
-            setIsModalOpen(false);
+            const response = await axiosInstance.put<ApiResponse<ICategory>>(
+                `/forecasts/${forecastId}/budgets/${budgetId}/categories/${selectedCategoryId}`,
+                newCategory
+            );
+            if (response.data.success && response.data.data) {
+                const updatedCategory = response.data.data;
+
+                setCategories(
+                    categories.map((category) =>
+                        category._id === selectedCategoryId ? updatedCategory : category
+                    )
+                );
+                setIsModalOpen(false);
+            } else {
+                alert(response.data.message || 'Failed to update category');
+            }
         } catch (error) {
             console.error('Error updating category:', error);
+            alert('An error occurred while updating the category');
         }
     };
 
     const handleDeleteCategory = async (id: string) => {
         try {
-            await axiosInstance.delete(`/categories/${id}`);
-            setCategories(categories.filter(category => category._id !== id));
+            const response = await axiosInstance.delete<ApiResponse<null>>(
+                `/forecasts/${forecastId}/budgets/${budgetId}/categories/${id}`
+            );
+            if (response.data.success) {
+                setCategories(categories.filter((category) => category._id !== id));
+            } else {
+                alert(response.data.message || 'Failed to delete category');
+            }
         } catch (error) {
             console.error('Error deleting category:', error);
+            alert('An error occurred while deleting the category');
         }
     };
 
@@ -96,28 +134,30 @@ const Categories: React.FC = () => {
         setIsModalOpen(true);
     };
 
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
         setNewCategory({ ...newCategory, [name]: value });
     };
 
     const handleViewSubcategories = (categoryId: string) => {
-        navigate(`/subcategories/${categoryId}`);
+        navigate(`/forecasts/${forecastId}/budgets/${budgetId}/categories/${categoryId}/subcategories`);
     };
 
     return (
         <Container>
             <Row className="my-4">
                 <Col>
-                    <h2 className="text-center">Categories</h2>
+                    <h1 className="text-center">Categories</h1>
                 </Col>
             </Row>
             <Row className="my-4">
                 <Col>
-                    <h3 className="text-start">{budget?.type} - {budget?.month}/{budget?.year}</h3>
+                    <h3 className="text-start">
+                        {monthlyBudget?.type} - {monthlyBudget?.month}/{monthlyBudget?.year}
+                    </h3>
                 </Col>
                 <Col>
-                    <h3 className="text-end">{budget?.amount}</h3>
+                    <h3 className="text-end">${monthlyBudget?.budget}</h3>
                 </Col>
             </Row>
             <Row className="mb-4">
@@ -129,6 +169,7 @@ const Categories: React.FC = () => {
             </Row>
             <Row>
                 <Col>
+                    {error && <p className="text-danger">{error}</p>}
                     <Table striped bordered hover responsive>
                         <thead>
                             <tr>
@@ -138,14 +179,31 @@ const Categories: React.FC = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {categories.map(category => (
+                            {categories.map((category) => (
                                 <tr key={category._id}>
                                     <td>{category.name}</td>
-                                    <td>{category.amount}</td>
+                                    <td>${category.categoryBudget}</td>
                                     <td>
-                                        <Button variant="secondary" className="me-2" onClick={() => openEditModal(category)}>Edit</Button>
-                                        <Button variant="danger" className="me-2" onClick={() => handleDeleteCategory(category._id!)}>Delete</Button>
-                                        <Button variant="info" onClick={() => handleViewSubcategories(category._id!)}>View Subcategories</Button>
+                                        <Button
+                                            variant="secondary"
+                                            className="me-2"
+                                            onClick={() => openEditModal(category)}
+                                        >
+                                            Edit
+                                        </Button>
+                                        <Button
+                                            variant="danger"
+                                            className="me-2"
+                                            onClick={() => handleDeleteCategory(category._id!)}
+                                        >
+                                            Delete
+                                        </Button>
+                                        <Button
+                                            variant="primary"
+                                            onClick={() => handleViewSubcategories(category._id!)}
+                                        >
+                                            View Subcategories
+                                        </Button>
                                     </td>
                                 </tr>
                             ))}
@@ -174,8 +232,8 @@ const Categories: React.FC = () => {
                             <Form.Label>Amount</Form.Label>
                             <Form.Control
                                 type="number"
-                                name="amount"
-                                value={newCategory.amount}
+                                name="categoryBudget"
+                                value={newCategory.categoryBudget}
                                 onChange={handleInputChange}
                                 required
                             />
@@ -183,8 +241,13 @@ const Categories: React.FC = () => {
                     </Form>
                 </Modal.Body>
                 <Modal.Footer>
-                    <Button variant="secondary" onClick={() => setIsModalOpen(false)}>Cancel</Button>
-                    <Button variant="primary" onClick={isEditMode ? handleUpdateCategory : handleCreateCategory}>
+                    <Button variant="secondary" onClick={() => setIsModalOpen(false)}>
+                        Cancel
+                    </Button>
+                    <Button
+                        variant="primary"
+                        onClick={isEditMode ? handleUpdateCategory : handleCreateCategory}
+                    >
                         {isEditMode ? 'Update' : 'Create'}
                     </Button>
                 </Modal.Footer>

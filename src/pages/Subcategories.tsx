@@ -2,16 +2,20 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import axiosInstance from '../axiosConfig';
 import { Button, Form, Modal, Table, Container, Row, Col } from 'react-bootstrap';
-import { ICategory } from 'budget-system-shared/src/models/Category';
-import { ISubcategory } from 'budget-system-shared/src/models/Subcategory';
+import { ApiResponse, ICategory, ISubcategory } from 'budget-system-shared';
 
 const Subcategories: React.FC = () => {
-    const { categoryId } = useParams<{ categoryId: string }>();
+    const { forecastId, budgetId, categoryId } = useParams<{
+        forecastId: string;
+        budgetId: string;
+        categoryId: string;
+    }>();
+
     const emptyNewSubcategory: ISubcategory = {
         name: '',
-        amount: 0,
-        isPersonal: false,
-        category: categoryId || ''
+        subcategoryBudget: 0,
+        category: categoryId || '',
+        isActive: true,
     };
 
     const [subcategories, setSubcategories] = useState<ISubcategory[]>([]);
@@ -20,74 +24,104 @@ const Subcategories: React.FC = () => {
     const [selectedSubcategoryId, setSelectedSubcategoryId] = useState<string | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isEditMode, setIsEditMode] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        if (categoryId) {
-            fetchCategory(categoryId);
+        if (forecastId && budgetId && categoryId) {
+            fetchCategory(forecastId, budgetId, categoryId);
+            fetchSubcategories(forecastId, budgetId, categoryId);
         }
-    }, [categoryId]);
+    }, [forecastId, budgetId, categoryId]);
 
-    useEffect(() => {
-        if (categoryId) {
-            fetchSubcategories(categoryId);
-        }
-    }, [categoryId]);
-
-    const fetchCategory = async (categoryId: string) => {
+    const fetchCategory = async (forecastId: string, budgetId: string, categoryId: string) => {
         try {
-            const response = await axiosInstance.get<ICategory>(`/categories/${categoryId}`);
-            setCategory(response.data);
+            const response = await axiosInstance.get<ApiResponse<ICategory>>(
+                `/forecasts/${forecastId}/budgets/${budgetId}/categories/${categoryId}`
+            );
+            if (response.data.success && response.data.data) {
+                setCategory(response.data.data);
+            } else {
+                setError(response.data.message || 'Failed to fetch category');
+            }
         } catch (error) {
-            console.error('Error fetching categories:', error);
+            setError('An error occurred while fetching the category');
+            console.error('Error fetching category:', error);
         }
     };
 
-    const fetchSubcategories = async (categoryId: string) => {
+    const fetchSubcategories = async (forecastId: string, budgetId: string, categoryId: string) => {
         try {
-            const response = await axiosInstance.get<ISubcategory[]>(`/categories/${categoryId}/subcategories`);
-            setSubcategories(response.data);
+            const response = await axiosInstance.get<ApiResponse<ISubcategory[]>>(
+                `/forecasts/${forecastId}/budgets/${budgetId}/categories/${categoryId}/subcategories`
+            );
+            if (response.data.success && response.data.data) {
+                setSubcategories(response.data.data);
+            } else {
+                setError(response.data.message || 'Failed to fetch subcategories');
+            }
         } catch (error) {
+            setError('An error occurred while fetching subcategories');
             console.error('Error fetching subcategories:', error);
         }
     };
 
     const handleCreateSubcategory = async () => {
         try {
-            const response = await axiosInstance.post<ISubcategory>(`/categories/${categoryId}/subcategories`, { ...newSubcategory, category: categoryId });
-            setSubcategories([...subcategories, response.data]);
-            setNewSubcategory(emptyNewSubcategory);
-            setIsModalOpen(false);
-            if (categoryId) {
-                fetchSubcategories(categoryId);
+            const response = await axiosInstance.post<ApiResponse<ISubcategory>>(
+                `/forecasts/${forecastId}/budgets/${budgetId}/categories/${categoryId}/subcategories`,
+                { ...newSubcategory, category: categoryId }
+            );
+            if (response.data.success && response.data.data) {
+                setSubcategories([...subcategories, response.data.data]);
+                setNewSubcategory(emptyNewSubcategory);
+                setIsModalOpen(false);
+            } else {
+                alert(response.data.message || 'Failed to create subcategory');
             }
         } catch (error) {
             console.error('Error creating subcategory:', error);
+            alert('An error occurred while creating the subcategory');
         }
     };
 
     const handleUpdateSubcategory = async () => {
         if (!selectedSubcategoryId) return;
         try {
-            const response = await axiosInstance.put<ISubcategory>(`/categories/subcategories/${selectedSubcategoryId}`, newSubcategory);
-            setSubcategories(subcategories.map(subcategory => (subcategory._id === selectedSubcategoryId ? response.data : subcategory)));
-            setIsModalOpen(false);
-            if (categoryId) {
-                fetchSubcategories(categoryId);
+            const response = await axiosInstance.put<ApiResponse<ISubcategory>>(
+                `/forecasts/${forecastId}/budgets/${budgetId}/categories/${categoryId}/subcategories/${selectedSubcategoryId}`,
+                newSubcategory
+            );
+            if (response.data.success && response.data.data) {
+                const updatedSubcategory = response.data.data;
+
+                setSubcategories(
+                    subcategories.map((subcategory) =>
+                        subcategory._id === selectedSubcategoryId ? updatedSubcategory : subcategory
+                    )
+                );
+                setIsModalOpen(false);
+            } else {
+                alert(response.data.message || 'Failed to update subcategory');
             }
         } catch (error) {
             console.error('Error updating subcategory:', error);
+            alert('An error occurred while updating the subcategory');
         }
     };
 
     const handleDeleteSubcategory = async (id: string) => {
         try {
-            await axiosInstance.delete(`/categories/subcategories/${id}`);
-            setSubcategories(subcategories.filter(subcategory => subcategory._id !== id));
-            if (categoryId) {
-                fetchSubcategories(categoryId);
+            const response = await axiosInstance.delete<ApiResponse<null>>(
+                `/forecasts/${forecastId}/budgets/${budgetId}/categories/${categoryId}/subcategories/${id}`
+            );
+            if (response.data.success) {
+                setSubcategories(subcategories.filter((subcategory) => subcategory._id !== id));
+            } else {
+                alert(response.data.message || 'Failed to delete subcategory');
             }
         } catch (error) {
             console.error('Error deleting subcategory:', error);
+            alert('An error occurred while deleting the subcategory');
         }
     };
 
@@ -104,24 +138,27 @@ const Subcategories: React.FC = () => {
         setIsModalOpen(true);
     };
 
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
         setNewSubcategory({ ...newSubcategory, [name]: value });
     };
 
-    const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, checked } = e.target;
-        setNewSubcategory({ ...newSubcategory, [name]: checked });
-    };
-
-    const totalAmount = subcategories.reduce((total, subcategory) => total + subcategory.amount, 0);
-    const totalAvailable = (category?.amount ?? 0) - totalAmount;
+    const totalAmount = subcategories.reduce((total, subcategory) => total + subcategory.subcategoryBudget, 0);
+    const totalAvailable = (category?.categoryBudget ?? 0) - totalAmount;
 
     return (
         <Container>
             <Row className="my-4">
                 <Col>
                     <h1 className="text-center">Subcategories</h1>
+                </Col>
+            </Row>
+            <Row className="my-4">
+                <Col>
+                    <h3 className="text-start">{category?.name}</h3>
+                </Col>
+                <Col>
+                    <h3 className="text-end">${category?.categoryBudget}</h3>
                 </Col>
             </Row>
             <Row className="mb-4">
@@ -133,40 +170,54 @@ const Subcategories: React.FC = () => {
             </Row>
             <Row>
                 <Col>
+                    {error && <p className="text-danger">{error}</p>}
                     <Table striped bordered hover responsive>
                         <thead>
                             <tr>
-                                <td colSpan={3} className="text-end"><strong>{category?.name}</strong></td>
-                                <td><strong>{category?.amount}</strong></td>
-                            </tr>
-                            <tr>
                                 <th>Name</th>
                                 <th>Amount</th>
-                                <th>Is Personal</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {subcategories.map(subcategory => (
+                            {subcategories.map((subcategory) => (
                                 <tr key={subcategory._id}>
                                     <td>{subcategory.name}</td>
-                                    <td>{subcategory.amount}</td>
-                                    <td>{subcategory.isPersonal ? 'Yes' : 'No'}</td>
+                                    <td>${subcategory.subcategoryBudget}</td>
                                     <td>
-                                        <Button variant="secondary" className="me-2" onClick={() => openEditModal(subcategory)}>Edit</Button>
-                                        <Button variant="danger" onClick={() => handleDeleteSubcategory(subcategory._id!)}>Delete</Button>
+                                        <Button
+                                            variant="secondary"
+                                            className="me-2"
+                                            onClick={() => openEditModal(subcategory)}
+                                        >
+                                            Edit
+                                        </Button>
+                                        <Button
+                                            variant="danger"
+                                            onClick={() => handleDeleteSubcategory(subcategory._id!)}
+                                        >
+                                            Delete
+                                        </Button>
                                     </td>
                                 </tr>
                             ))}
                         </tbody>
                         <tfoot>
                             <tr>
-                                <td colSpan={3} className="text-end"><strong>Total Amount:</strong></td>
-                                <td><strong>{totalAmount}</strong></td>
+                                <td colSpan={2} className="text-end">
+                                    <strong>Total Amount:</strong>
+                                </td>
+                                <td colSpan={2}>
+                                    <strong>${totalAmount}</strong>
+                                </td>
                             </tr>
                             <tr>
-                                <td colSpan={3} className="text-end"><strong>Available Amount:</strong></td>
-                                <td><strong>{totalAvailable}</strong></td>
+                                <td colSpan={2} className="text-end">
+                                    <strong>Available Amount:</strong>
+                                </td>
+                                <td colSpan={2}>
+                                    <strong>${totalAvailable}</strong>
+                                </td>
                             </tr>
                         </tfoot>
                     </Table>
@@ -193,26 +244,22 @@ const Subcategories: React.FC = () => {
                             <Form.Label>Amount</Form.Label>
                             <Form.Control
                                 type="number"
-                                name="amount"
-                                value={newSubcategory.amount}
+                                name="subcategoryBudget"
+                                value={newSubcategory.subcategoryBudget}
                                 onChange={handleInputChange}
                                 required
-                            />
-                        </Form.Group>
-                        <Form.Group className="mb-3">
-                            <Form.Check
-                                type="checkbox"
-                                label="Is Personal"
-                                name="isPersonal"
-                                checked={newSubcategory.isPersonal}
-                                onChange={handleCheckboxChange}
                             />
                         </Form.Group>
                     </Form>
                 </Modal.Body>
                 <Modal.Footer>
-                    <Button variant="secondary" onClick={() => setIsModalOpen(false)}>Cancel</Button>
-                    <Button variant="primary" onClick={isEditMode ? handleUpdateSubcategory : handleCreateSubcategory}>
+                    <Button variant="secondary" onClick={() => setIsModalOpen(false)}>
+                        Cancel
+                    </Button>
+                    <Button
+                        variant="primary"
+                        onClick={isEditMode ? handleUpdateSubcategory : handleCreateSubcategory}
+                    >
                         {isEditMode ? 'Update' : 'Create'}
                     </Button>
                 </Modal.Footer>
