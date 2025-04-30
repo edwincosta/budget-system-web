@@ -4,11 +4,13 @@ import { IExpense } from "budget-system-shared";
 import expenseService from "../../services/expenseService";
 
 const ExpenseCreate: React.FC = () => {
-  const { forecastId, budgetId } = useParams<{ forecastId: string; budgetId: string }>();
+  const { budgetId } = useParams<{ budgetId: string }>();
 
   const [expense, setExpense] = useState<IExpense>({
+    monthlyBudget: "",
     category: "",
     subcategory: "",
+    type: "Pessoal",
     amount: 0,
     description: "",
     date: new Date(),
@@ -46,23 +48,23 @@ const ExpenseCreate: React.FC = () => {
     <form onSubmit={handleSubmit}>
       <div>
         <label>Category:</label>
-        <input
+        {/* <input
           type="text"
           name="category"
           value={expense.category}
           onChange={handleChange}
           required
-        />
+        /> */}
       </div>
       <div>
         <label>Subcategory:</label>
-        <input
+        {/* <input
           type="text"
           name="subcategory"
           value={expense.subcategory}
           onChange={handleChange}
           required
-        />
+        /> */}
       </div>
       <div>
         <label>Amount:</label>

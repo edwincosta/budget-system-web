@@ -2,18 +2,17 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axiosInstance from '../axiosConfig';
 import { Button, Form, Modal, Table, Container, Row, Col } from 'react-bootstrap';
-import { ApiResponse, IMonthlyBudget, ICategory } from 'budget-system-shared';
+import { ApiResponse, ICategory } from 'budget-system-shared';
 
 const Categories: React.FC = () => {
     const { forecastId, budgetId } = useParams<{ forecastId: string; budgetId: string }>();
     const emptyNewCategory: ICategory = {
         name: '',
         categoryBudget: 0,
-        monthlyBudget: budgetId || '',
-        subcategories: [],
+        isActive: true,
+        forecast: forecastId || '',
     };
 
-    const [monthlyBudget, setMonthlyBudget] = useState<IMonthlyBudget | null>(null);
     const [categories, setCategories] = useState<ICategory[]>([]);
     const [newCategory, setNewCategory] = useState<ICategory>(emptyNewCategory);
     const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
@@ -24,26 +23,9 @@ const Categories: React.FC = () => {
 
     useEffect(() => {
         if (forecastId && budgetId) {
-            fetchMonthlyBudget(forecastId, budgetId);
             fetchCategories(forecastId, budgetId);
         }
     }, [forecastId, budgetId]);
-
-    const fetchMonthlyBudget = async (forecastId: string, budgetId: string) => {
-        try {
-            const response = await axiosInstance.get<ApiResponse<IMonthlyBudget>>(
-                `/forecasts/${forecastId}/budgets/${budgetId}`
-            );
-            if (response.data.success && response.data.data) {
-                setMonthlyBudget(response.data.data);
-            } else {
-                setError(response.data.message || 'Failed to fetch budget');
-            }
-        } catch (error) {
-            setError('An error occurred while fetching the budget');
-            console.error('Error fetching budget:', error);
-        }
-    };
 
     const fetchCategories = async (forecastId: string, budgetId: string) => {
         try {
@@ -148,16 +130,6 @@ const Categories: React.FC = () => {
             <Row className="my-4">
                 <Col>
                     <h1 className="text-center">Categories</h1>
-                </Col>
-            </Row>
-            <Row className="my-4">
-                <Col>
-                    <h3 className="text-start">
-                        {monthlyBudget?.type} - {monthlyBudget?.month}/{monthlyBudget?.year}
-                    </h3>
-                </Col>
-                <Col>
-                    <h3 className="text-end">${monthlyBudget?.budget}</h3>
                 </Col>
             </Row>
             <Row className="mb-4">

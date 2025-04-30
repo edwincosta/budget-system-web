@@ -14,6 +14,13 @@ import ViewBudget from './pages/budgets/ViewBudget';
 import EditBudget from './pages/budgets/EditBudget';
 import DeleteBudget from './pages/budgets/DeleteBudget';
 import ListBudgets from './pages/budgets/ListBudgets';
+import ListForecasts from './pages/forecasts/ListForecasts';
+import CreateCategory from './pages/categories/CreateCategory';
+import CreateForecast from './pages/forecasts/CreateForecast';
+import EditForecast from './pages/forecasts/EditForecast';
+import ListCategories from './pages/categories/ListCategories';
+import ViewCategory from './pages/categories/ViewCategory';
+import EditCategory from './pages/categories/EditCategory';
 
 const PrivateRoute: React.FC<{ children: React.ReactElement }> = ({ children }) => {
   const { isAuthenticated } = useAuth();
@@ -40,14 +47,32 @@ const PrivateRoutes: React.FC = () => (
     />
 
     {/* Forecasts */}
-    <Route
-      path="/forecasts"
-      element={
-        <PrivateRoute>
-          <Forecasts />
-        </PrivateRoute>
-      }
-    />
+    <Route path="/forecasts">
+      <Route
+          index
+          element={
+            <PrivateRoute>
+              <ListForecasts />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="create"
+          element={
+            <PrivateRoute>
+              <CreateForecast />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path=":forecastId/edit"
+          element={
+            <PrivateRoute>
+              <EditForecast />
+            </PrivateRoute>
+          }
+        />
+    </Route>
 
     {/* Budgets */}
     <Route path="/budgets">
@@ -94,14 +119,49 @@ const PrivateRoutes: React.FC = () => (
     </Route>
 
     {/* Categories */}
-    <Route
-      path="/forecasts/:forecastId/budgets/:budgetId/categories"
-      element={
-        <PrivateRoute>
-          <Categories />
-        </PrivateRoute>
-      }
-    />
+    <Route path="/categories">
+      <Route
+        index
+        element={
+          <PrivateRoute>
+            <ListCategories />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="create"
+        element={
+          <PrivateRoute>
+            <CreateCategory />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path=":categoryId"
+        element={
+          <PrivateRoute>
+            <ViewCategory />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path=":categoryId/edit"
+        element={
+          <PrivateRoute>
+            <EditCategory />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path=":budgetId/delete"
+        element={
+          <PrivateRoute>
+            <DeleteBudget />
+          </PrivateRoute>
+        }
+      />
+    </Route>
+
     <Route
       path="/forecasts/:forecastId/budgets/:budgetId/categories/:categoryId/subcategories"
       element={

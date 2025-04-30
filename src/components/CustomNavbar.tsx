@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Navbar, Nav, Container, Button } from 'react-bootstrap';
 import { useAuth } from '../context/AuthContext';
+import config from '../config';
 
 const CustomNavbar: React.FC = () => {
   const { logout } = useAuth();
@@ -25,7 +26,7 @@ const CustomNavbar: React.FC = () => {
         <Navbar.Collapse id="basic-navbar-nav">
           <Nav className="me-auto" onSelect={handleSelect}>
             <Nav.Link as={Link} to="/new-expense" onClick={handleSelect}>New Expense</Nav.Link>
-            <Nav.Link as={Link} to="/forecasts" onClick={handleSelect}>Forecasts</Nav.Link>
+            <Nav.Link as={Link} to={config.forecastBaseUrl} onClick={handleSelect}>Forecasts</Nav.Link>
           </Nav>
           <Button variant="outline-danger" onClick={handleLogout}>Logout</Button>
         </Navbar.Collapse>

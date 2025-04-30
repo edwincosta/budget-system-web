@@ -1,10 +1,15 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { Button, Form, Container, Row, Col, Alert, Table } from 'react-bootstrap';
 import axiosInstance from '../../axiosConfig';
 import { ApiResponse, IMonthlyBudget, IMonthlyBudgetCategory, ICategory } from 'budget-system-shared';
+import config from '../../config';
+import { useAuth } from '../../context/AuthContext';
 
 const EditBudget: React.FC = () => {
+    const { user } = useAuth();
+    const [searchParams] = useSearchParams();
+    const forecastId = searchParams.get('forecastId') || user?.defaultForecast || '';
     const { budgetId } = useParams<{ budgetId: string }>();
     const navigate = useNavigate();
 
@@ -18,7 +23,7 @@ const EditBudget: React.FC = () => {
     useEffect(() => {
         const fetchBudget = async () => {
             try {
-                const response = await axiosInstance.get<ApiResponse<IMonthlyBudget>>(`/budgets/${budgetId}`);
+                const response = await axiosInstance.get<ApiResponse<IMonthlyBudget>>(`${config.budgetBaseUrl}/${budgetId}`);
                 if (response.data.success && response.data.data) {
                     setMonthlyBudget(response.data.data);
                 } else {
@@ -33,7 +38,7 @@ const EditBudget: React.FC = () => {
         const fetchCategories = async () => {
             try {
                 const response = await axiosInstance.get<ApiResponse<IMonthlyBudgetCategory[]>>(
-                    `/budgets/${budgetId}/categories`
+                    `${config.budgetBaseUrl}/${budgetId}/categories`
                 );
                 if (response.data.success) {
                     setCategories(response.data.data || []);
@@ -46,7 +51,7 @@ const EditBudget: React.FC = () => {
 
         const fetchAllCategories = async () => {
             try {
-                const response = await axiosInstance.get<ApiResponse<ICategory[]>>('/categories');
+                const response = await axiosInstance.get<ApiResponse<ICategory[]>>(`${config.categoryBaseUrl}?forecastId=${forecastId}`);
                 if (response.data.success) {
                     setAllCategories(response.data.data || []);
                 }
@@ -80,7 +85,7 @@ const EditBudget: React.FC = () => {
         }
 
         try {
-            const response = await axiosInstance.put<ApiResponse<IMonthlyBudget>>(`/budgets/${budgetId}`, monthlyBudget);
+            const response = await axiosInstance.put<ApiResponse<IMonthlyBudget>>(`${config.budgetBaseUrl}/${budgetId}`, monthlyBudget);
             if (response.data.success) {
                 setSuccess('Budget updated successfully!');
             } else {
@@ -94,7 +99,7 @@ const EditBudget: React.FC = () => {
 
     const handleAddCategory = async (categoryId: string) => {
         try {
-            const response = await axiosInstance.post<ApiResponse<IMonthlyBudgetCategory>>('/monthly-budget-categories', {
+            const response = await axiosInstance.post<ApiResponse<IMonthlyBudgetCategory>>(`${config.budgetBaseUrl}/categories`, {
                 monthlyBudget: budgetId,
                 category: categoryId,
             });

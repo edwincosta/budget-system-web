@@ -1,58 +1,63 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { FiEye, FiEdit, FiTrash } from 'react-icons/fi'; // Importa os ícones
-import { Button, Table, Alert, Container, Row, Col, OverlayTrigger, Tooltip } from 'react-bootstrap';
+import { Button, Table, Alert, Container, Row, Col, OverlayTrigger, Tooltip, Form } from 'react-bootstrap';
 import axiosInstance from '../../axiosConfig';
-import { ApiResponse, IMonthlyBudget } from 'budget-system-shared';
-import { useAuth } from '../../context/AuthContext';
+import { ApiResponse, ICategory } from 'budget-system-shared';
 import config from '../../config';
 
-const ListBudgets: React.FC = () => {
-    const { user } = useAuth();
+const ListCategories: React.FC = () => {
     const [searchParams] = useSearchParams();
-    const forecastId = searchParams.get('forecastId') || user?.defaultForecast || '';
+    const forecastId = searchParams.get('forecastId') || '';
     const navigate = useNavigate();
 
-    const [budgets, setBudgets] = useState<IMonthlyBudget[]>([]);
+    const [categories, setCategories] = useState<ICategory[]>([]);
+    const [isActive, setIsActive] = useState<string>('All');
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
 
     useEffect(() => {
-        const fetchBudgets = async () => {
+        const fetchCategories = async () => {
             try {
-                console.log('Fetching budgets for forecastId:', forecastId);
-                const response = await axiosInstance.get<ApiResponse<IMonthlyBudget[]>>(
-                    `/budgets?forecastId=${forecastId}`
+                let activeFilter = '';
+                if (isActive === 'Active') {
+                    activeFilter = '&isActive=true';
+                } else if (isActive === 'Inactive') {
+                    activeFilter = '&isActive=false';
+                }
+
+                const response = await axiosInstance.get<ApiResponse<ICategory[]>>(
+                    `${config.categoryBaseUrl}?forecastId=${forecastId}${activeFilter}`
                 );
                 if (response.data.success && response.data.data) {
-                    setBudgets(response.data.data);
+                    setCategories(response.data.data);
                 } else {
-                    setError(response.data.message || 'Failed to fetch budgets.');
+                    setError(response.data.message || 'Failed to fetch categories.');
                 }
             } catch (error) {
-                console.error('Error fetching budgets:', error);
-                setError('An error occurred while fetching the budgets.');
+                console.error('Error fetching categories:', error);
+                setError('An error occurred while fetching the categories.');
             }
         };
 
-        fetchBudgets();
-    }, [forecastId]);
+        fetchCategories();
+    }, [forecastId, isActive]);
 
-    const handleDelete = async (budgetId: string) => {
+    const handleDelete = async (id: string) => {
         setError(null);
         setSuccess(null);
 
         try {
-            const response = await axiosInstance.delete<ApiResponse<null>>(`/budgets/${budgetId}`);
+            const response = await axiosInstance.delete<ApiResponse<null>>(`${config.categoryBaseUrl}/${id}`);
             if (response.data.success) {
-                setSuccess('Budget deleted successfully!');
-                setBudgets(budgets.filter((budget) => budget._id !== budgetId));
+                setSuccess('Category deleted successfully!');
+                setCategories(categories.filter((category) => category._id !== id));
             } else {
-                setError(response.data.message || 'Failed to delete budget.');
+                setError(response.data.message || 'Failed to delete category.');
             }
         } catch (error) {
-            console.error('Error deleting budget:', error);
-            setError('An error occurred while deleting the budget.');
+            console.error('Error deleting category:', error);
+            setError('An error occurred while deleting the category.');
         }
     };
 
@@ -60,8 +65,7 @@ const ListBudgets: React.FC = () => {
         <Container>
             <Row className="my-4">
                 <Col>
-                    <h3 className="text-center">Budgets</h3>
-                    <h3 className="text-center">{budgets.length > 0 && typeof budgets[0].forecast !== 'string' ? budgets[0].forecast?.name : ""}</h3>
+                    <h1 className="text-center">Categories</h1>
                 </Col>
             </Row>
             {error && (
@@ -82,10 +86,26 @@ const ListBudgets: React.FC = () => {
                 <Col className="text-end">
                     <Button
                         variant="primary"
-                        onClick={() => navigate(`/budgets/create?forecastId=${forecastId}`)}
+                        onClick={() => navigate(`${config.categoryBaseUrl}/create?forecastId=${forecastId}`)}
                     >
                         Create New Budget
                     </Button>
+                </Col>
+            </Row>
+            <Row className="mb-4">
+                <Col>
+                    <Form.Group controlId="isActiveFilter">
+                        <Form.Label>Filter by Active Status</Form.Label>
+                        <Form.Control
+                            as="select"
+                            value={isActive}
+                            onChange={(e) => setIsActive(e.target.value)}
+                        >
+                            <option value="All">All</option>
+                            <option value="Active">Active</option>
+                            <option value="Inactive">Inactive</option>
+                        </Form.Control>
+                    </Form.Group>
                 </Col>
             </Row>
             <Row>
@@ -93,29 +113,29 @@ const ListBudgets: React.FC = () => {
                     <Table striped bordered hover responsive>
                         <thead>
                             <tr>
-                                <th>Month</th>
-                                <th>Year</th>
+                                <th>Name</th>
                                 <th>Budget</th>
+                                <th>Is Active</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {budgets.map((budget) => (
-                                <tr key={budget._id}>
-                                    <td>{budget.month}</td>
-                                    <td>{budget.year}</td>
-                                    <td>${budget.budget}</td>
+                            {categories.map((category) => (
+                                <tr key={category._id}>
+                                    <td>{category.name}</td>
+                                    <td>${category.categoryBudget}</td>
+                                    <td>{category.isActive ? "Yes" : "No"}</td>
                                     <td>
                                         {/* Botão de Visualizar */}
                                         <OverlayTrigger
                                             placement="top"
-                                            overlay={<Tooltip id={`tooltip-view-${budget._id}`}>View</Tooltip>}
+                                            overlay={<Tooltip id={`tooltip-view-${category._id}`}>View</Tooltip>}
                                         >
                                             <Button
                                                 variant="info"
                                                 size="sm"
                                                 className="me-2"
-                                                onClick={() => navigate(`/budgets/${budget._id}`)}
+                                                onClick={() => navigate(`${config.categoryBaseUrl}/${category._id}`)}
                                             >
                                                 <FiEye />
                                             </Button>
@@ -124,13 +144,13 @@ const ListBudgets: React.FC = () => {
                                         {/* Botão de Editar */}
                                         <OverlayTrigger
                                             placement="top"
-                                            overlay={<Tooltip id={`tooltip-edit-${budget._id}`}>Edit</Tooltip>}
+                                            overlay={<Tooltip id={`tooltip-edit-${category._id}`}>Edit</Tooltip>}
                                         >
                                             <Button
                                                 variant="warning"
                                                 size="sm"
                                                 className="me-2"
-                                                onClick={() => navigate(`/budgets/${budget._id}/edit?forecastId=${forecastId}`)}
+                                                onClick={() => navigate(`${config.categoryBaseUrl}/${category._id}/edit`)}
                                             >
                                                 <FiEdit />
                                             </Button>
@@ -139,12 +159,12 @@ const ListBudgets: React.FC = () => {
                                         {/* Botão de Excluir */}
                                         <OverlayTrigger
                                             placement="top"
-                                            overlay={<Tooltip id={`tooltip-delete-${budget._id}`}>Delete</Tooltip>}
+                                            overlay={<Tooltip id={`tooltip-delete-${category._id}`}>Delete</Tooltip>}
                                         >
                                             <Button
                                                 variant="danger"
                                                 size="sm"
-                                                onClick={() => handleDelete(budget._id!)}
+                                                onClick={() => handleDelete(category._id!)}
                                             >
                                                 <FiTrash />
                                             </Button>
@@ -167,4 +187,4 @@ const ListBudgets: React.FC = () => {
     );
 };
 
-export default ListBudgets;
+export default ListCategories;

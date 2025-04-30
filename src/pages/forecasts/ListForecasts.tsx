@@ -1,58 +1,51 @@
 import React, { useEffect, useState } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { FiEye, FiEdit, FiTrash } from 'react-icons/fi'; // Importa os ícones
 import { Button, Table, Alert, Container, Row, Col, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import axiosInstance from '../../axiosConfig';
-import { ApiResponse, IMonthlyBudget } from 'budget-system-shared';
-import { useAuth } from '../../context/AuthContext';
+import { ApiResponse, IForecast } from 'budget-system-shared';
 import config from '../../config';
 
-const ListBudgets: React.FC = () => {
-    const { user } = useAuth();
-    const [searchParams] = useSearchParams();
-    const forecastId = searchParams.get('forecastId') || user?.defaultForecast || '';
+const ListForecasts: React.FC = () => {
     const navigate = useNavigate();
 
-    const [budgets, setBudgets] = useState<IMonthlyBudget[]>([]);
+    const [forecasts, setForecasts] = useState<IForecast[]>([]);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
 
     useEffect(() => {
-        const fetchBudgets = async () => {
+        const fetchForecasts = async () => {
             try {
-                console.log('Fetching budgets for forecastId:', forecastId);
-                const response = await axiosInstance.get<ApiResponse<IMonthlyBudget[]>>(
-                    `/budgets?forecastId=${forecastId}`
-                );
+                const response = await axiosInstance.get<ApiResponse<IForecast[]>>(config.forecastBaseUrl);
                 if (response.data.success && response.data.data) {
-                    setBudgets(response.data.data);
+                    setForecasts(response.data.data);
                 } else {
-                    setError(response.data.message || 'Failed to fetch budgets.');
+                    setError(response.data.message || 'Failed to fetch forecasts.');
                 }
             } catch (error) {
-                console.error('Error fetching budgets:', error);
-                setError('An error occurred while fetching the budgets.');
+                console.error('Error fetching forecasts:', error);
+                setError('An error occurred while fetching the forecasts.');
             }
         };
 
-        fetchBudgets();
-    }, [forecastId]);
+        fetchForecasts();
+    }, []);
 
-    const handleDelete = async (budgetId: string) => {
+    const handleDelete = async (forecastId: string) => {
         setError(null);
         setSuccess(null);
 
         try {
-            const response = await axiosInstance.delete<ApiResponse<null>>(`/budgets/${budgetId}`);
+            const response = await axiosInstance.delete<ApiResponse<null>>(`${config.forecastBaseUrl}/${forecastId}`);
             if (response.data.success) {
-                setSuccess('Budget deleted successfully!');
-                setBudgets(budgets.filter((budget) => budget._id !== budgetId));
+                setSuccess('Forecast deleted successfully!');
+                setForecasts(forecasts.filter((forecast) => forecast._id !== forecastId));
             } else {
-                setError(response.data.message || 'Failed to delete budget.');
+                setError(response.data.message || 'Failed to delete forecast.');
             }
         } catch (error) {
-            console.error('Error deleting budget:', error);
-            setError('An error occurred while deleting the budget.');
+            console.error('Error deleting forecast:', error);
+            setError('An error occurred while deleting the forecast.');
         }
     };
 
@@ -60,8 +53,7 @@ const ListBudgets: React.FC = () => {
         <Container>
             <Row className="my-4">
                 <Col>
-                    <h3 className="text-center">Budgets</h3>
-                    <h3 className="text-center">{budgets.length > 0 && typeof budgets[0].forecast !== 'string' ? budgets[0].forecast?.name : ""}</h3>
+                    <h3 className="text-center">Forecasts</h3>
                 </Col>
             </Row>
             {error && (
@@ -82,9 +74,9 @@ const ListBudgets: React.FC = () => {
                 <Col className="text-end">
                     <Button
                         variant="primary"
-                        onClick={() => navigate(`/budgets/create?forecastId=${forecastId}`)}
+                        onClick={() => navigate(`${config.forecastBaseUrl}/create`)}
                     >
-                        Create New Budget
+                        Create New Forecast
                     </Button>
                 </Col>
             </Row>
@@ -93,29 +85,39 @@ const ListBudgets: React.FC = () => {
                     <Table striped bordered hover responsive>
                         <thead>
                             <tr>
-                                <th>Month</th>
-                                <th>Year</th>
-                                <th>Budget</th>
+                                <th>Name</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {budgets.map((budget) => (
-                                <tr key={budget._id}>
-                                    <td>{budget.month}</td>
-                                    <td>{budget.year}</td>
-                                    <td>${budget.budget}</td>
+                            {forecasts.map((forecast) => (
+                                <tr key={forecast._id}>
+                                    <td>{forecast.name}</td>
                                     <td>
                                         {/* Botão de Visualizar */}
                                         <OverlayTrigger
                                             placement="top"
-                                            overlay={<Tooltip id={`tooltip-view-${budget._id}`}>View</Tooltip>}
+                                            overlay={<Tooltip id={`tooltip-view-${forecast._id}`}>Budgets</Tooltip>}
+                                        >
+                                            <Button
+                                                variant="primary"
+                                                size="sm"
+                                                className="me-2"
+                                                onClick={() => navigate(`${config.budgetBaseUrl}?forecastId=${forecast._id}`)}
+                                            >
+                                                <FiEye />
+                                            </Button>
+                                        </OverlayTrigger>
+
+                                        <OverlayTrigger
+                                            placement="top"
+                                            overlay={<Tooltip id={`tooltip-view-${forecast._id}`}>Categories</Tooltip>}
                                         >
                                             <Button
                                                 variant="info"
                                                 size="sm"
                                                 className="me-2"
-                                                onClick={() => navigate(`/budgets/${budget._id}`)}
+                                                onClick={() => navigate(`${config.categoryBaseUrl}?forecastId=${forecast._id}`)}
                                             >
                                                 <FiEye />
                                             </Button>
@@ -124,13 +126,13 @@ const ListBudgets: React.FC = () => {
                                         {/* Botão de Editar */}
                                         <OverlayTrigger
                                             placement="top"
-                                            overlay={<Tooltip id={`tooltip-edit-${budget._id}`}>Edit</Tooltip>}
+                                            overlay={<Tooltip id={`tooltip-edit-${forecast._id}`}>Edit</Tooltip>}
                                         >
                                             <Button
                                                 variant="warning"
                                                 size="sm"
                                                 className="me-2"
-                                                onClick={() => navigate(`/budgets/${budget._id}/edit?forecastId=${forecastId}`)}
+                                                onClick={() => navigate(`${config.forecastBaseUrl}/${forecast._id}/edit`)}
                                             >
                                                 <FiEdit />
                                             </Button>
@@ -139,12 +141,12 @@ const ListBudgets: React.FC = () => {
                                         {/* Botão de Excluir */}
                                         <OverlayTrigger
                                             placement="top"
-                                            overlay={<Tooltip id={`tooltip-delete-${budget._id}`}>Delete</Tooltip>}
+                                            overlay={<Tooltip id={`tooltip-delete-${forecast._id}`}>Delete</Tooltip>}
                                         >
                                             <Button
                                                 variant="danger"
                                                 size="sm"
-                                                onClick={() => handleDelete(budget._id!)}
+                                                onClick={() => handleDelete(forecast._id!)}
                                             >
                                                 <FiTrash />
                                             </Button>
@@ -156,15 +158,8 @@ const ListBudgets: React.FC = () => {
                     </Table>
                 </Col>
             </Row>
-            <Row className="mt-4">
-                <Col className="text-center">
-                    <Button variant="secondary" onClick={() => navigate(`${config.forecastBaseUrl}`)}>
-                        Back to Forecasts
-                    </Button>
-                </Col>
-            </Row>
         </Container>
     );
 };
 
-export default ListBudgets;
+export default ListForecasts;
