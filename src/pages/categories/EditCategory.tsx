@@ -4,7 +4,7 @@ import { Button, Form, Container, Row, Col, Alert, Table, OverlayTrigger, Toolti
 import axiosInstance from '../../axiosConfig';
 import { ApiResponse, ISubcategory, ICategory } from 'budget-system-shared';
 import { FiEdit, FiPlus, FiTrash } from 'react-icons/fi';
-import { FormatBrazilCurrency, MaskBrazilCurrencyInput } from '../../components/Utils';
+import { FormatBrazilCurrency } from '../../components/Utils';
 
 
 const EditCategory: React.FC = () => {
@@ -68,10 +68,10 @@ const EditCategory: React.FC = () => {
         setCategory({ ...category, [name]: name === 'categoryBudget' ? parseFloat(value) : value });
     };
 
-    const handleChangeCategoryBudget = (value: number) => {
-        if (!category) return;
-        setCategory({ ...category, 'categoryBudget': value });
-    };
+    // const handleChangeCategoryBudget = (value: number) => {
+    //     if (!category) return;
+    //     setCategory({ ...category, 'categoryBudget': value });
+    // };
 
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -176,9 +176,9 @@ const EditCategory: React.FC = () => {
     };
 
 
-    const handleChangeSubcategoryBudget = (value: number) => {
-        setNewSubcategory({ ...newSubcategory, 'subcategoryBudget': value });
-    };
+    // const handleChangeSubcategoryBudget = (value: number) => {
+    //     setNewSubcategory({ ...newSubcategory, 'subcategoryBudget': value });
+    // };
     
     
     const setIsActive = async (isActive: boolean) => {

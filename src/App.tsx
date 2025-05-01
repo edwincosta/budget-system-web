@@ -4,8 +4,6 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
-import Categories from './pages/Categories';
-import Forecasts from './pages/Forecasts';
 import Subcategories from './pages/Subcategories';
 import CustomNavbar from './components/CustomNavbar';
 import ListExpensesMonthly from './pages/expenses/ListExpensesMonthly';
