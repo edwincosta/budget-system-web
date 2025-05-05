@@ -1,7 +1,6 @@
 import React, { JSX } from 'react';
 import { CurrencyInput } from 'react-currency-mask';
 import { Form, FormControlProps } from 'react-bootstrap';
-import { jsx } from 'react/jsx-runtime';
 
 interface FormatBrazilCurrencyProps {
     currencyValue?: number;
