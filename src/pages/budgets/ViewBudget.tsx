@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Button, Table, Container, Row, Col, Alert } from 'react-bootstrap';
 import axiosInstance from '../../axiosConfig';
 import { ApiResponse, IMonthlyBudget, IMonthlyBudgetCategory } from 'budget-system-shared';
+import { FormatBrazilCurrency, FormatDate } from '../../components/Utils';
 
 const ViewBudget: React.FC = () => {
     const { budgetId } = useParams<{ budgetId: string }>();
@@ -77,7 +78,7 @@ const ViewBudget: React.FC = () => {
                                     </tr>
                                     <tr>
                                         <th>Budget</th>
-                                        <td>${monthlyBudget.budget}</td>
+                                        <td><FormatBrazilCurrency currencyValue={monthlyBudget.budget} /></td>
                                     </tr>
                                 </tbody>
                             </Table>
@@ -99,7 +100,7 @@ const ViewBudget: React.FC = () => {
                                         <tr key={category._id}>
                                             <td>{typeof category.category === 'string' ? category.category : category.category.name}</td>
                                             <td>{category.updatedBy || 'N/A'}</td>
-                                            <td>{category.updatedAt ? new Date(category.updatedAt).toLocaleDateString() : 'N/A'}</td>
+                                            <td><FormatDate value={category.updatedAt} /></td>
                                         </tr>
                                     ))}
                                 </tbody>

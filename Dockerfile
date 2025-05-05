@@ -1,32 +1,27 @@
 # Use a imagem base oficial do Node.js
-FROM nginx:alpine
+FROM node:23-slim
+
+ARG DEPLOY_ENV
+
+ENV DEPLOY_ENV=${DEPLOY_ENV}
 
 # Defina o diretório de trabalho
 WORKDIR /app
 
-# Copie os arquivos de configuração
-COPY package.json package-lock.json ./
+# Copie os arquivos de configuração do projeto
+COPY *.json ./
 
 # Instale as dependências
 RUN npm install
-# Copie o código fonte
+
+COPY *.html *.ts *.js ./
 COPY src ./src
 COPY public ./public
-COPY tsconfig.json ./
-COPY tsconfig.node.json ./
-COPY tsconfig.app.json ./
-COPY .env ./
-COPY vite.config.ts ./
-COPY README.md ./
-COPY index.html ./
-COPY eslint.config.js ./
 
-# Compile o projeto
-RUN npm run build
+# Copiar o script de entrada para o contêiner
+COPY entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/entrypoint.sh
 
-# Copie os arquivos compilados para o diretório do Nginx
-COPY dist /usr/share/nginx/html
-
-# Exponha a porta 80
-EXPOSE 80
+# Defina o comando de entrada
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 

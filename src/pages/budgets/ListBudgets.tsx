@@ -6,6 +6,7 @@ import axiosInstance from '../../axiosConfig';
 import { ApiResponse, IMonthlyBudget } from 'budget-system-shared';
 import { useAuth } from '../../context/AuthContext';
 import config from '../../config';
+import { FormatBrazilCurrency } from '../../components/Utils';
 
 const ListBudgets: React.FC = () => {
     const { user } = useAuth();
@@ -104,7 +105,7 @@ const ListBudgets: React.FC = () => {
                                 <tr key={budget._id}>
                                     <td>{budget.month}</td>
                                     <td>{budget.year}</td>
-                                    <td>${budget.budget}</td>
+                                    <td><FormatBrazilCurrency currencyValue={budget.budget}/></td>
                                     <td>
                                         {/* Botão de Visualizar */}
                                         <OverlayTrigger

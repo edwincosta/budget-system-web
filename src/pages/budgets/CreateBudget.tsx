@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Button, Form, Container, Row, Col, Alert } from 'react-bootstrap';
 import axiosInstance from '../../axiosConfig';
 import { ApiResponse, IMonthlyBudget } from 'budget-system-shared';
+import { MaskBrazilCurrencyInput } from '../../components/Utils';
 
 const CreateBudget: React.FC = () => {
     const [searchParams] = useSearchParams();
@@ -91,11 +92,11 @@ const CreateBudget: React.FC = () => {
                         </Form.Group>
                         <Form.Group className="mb-3">
                             <Form.Label>Budget</Form.Label>
-                            <Form.Control
-                                type="number"
+                            <MaskBrazilCurrencyInput
                                 name="budget"
                                 value={monthlyBudget.budget}
-                                onChange={handleInputChange}
+                                entity={monthlyBudget}
+                                setEntity={setMonthlyBudget}
                                 required
                                 min="0"
                             />

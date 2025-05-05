@@ -1,14 +1,14 @@
-import React from 'react';
-import InputMask from 'react-input-mask';
+import React, { JSX } from 'react';
+import { CurrencyInput } from 'react-currency-mask';
 import { Form, FormControlProps } from 'react-bootstrap';
+import { jsx } from 'react/jsx-runtime';
 
-interface FormatCurrencyProps {
-    currencyValue: number;
-    localeCode: string;
+interface FormatBrazilCurrencyProps {
+    currencyValue?: number;
 }
     
-const FormatCurrency: React.FC<FormatCurrencyProps> = ({ currencyValue, localeCode }) => {
-    const valorFormatado = currencyValue.toLocaleString(localeCode, {
+const FormatBrazilCurrency: React.FC<FormatBrazilCurrencyProps> = ({ currencyValue }) => {
+    const valorFormatado = (currencyValue ?? 0).toLocaleString("pt-BR", {
         style: 'currency',
         currency: 'BRL'
     });
@@ -16,42 +16,45 @@ const FormatCurrency: React.FC<FormatCurrencyProps> = ({ currencyValue, localeCo
     return <span>{valorFormatado}</span>;
 };
 
-
-interface FormatBrazilCurrencyProps {
-    currencyValue?: number;
-}
-    
-const FormatBrazilCurrency: React.FC<FormatBrazilCurrencyProps> = ({ currencyValue }) => {
-    return <FormatCurrency currencyValue={currencyValue ?? 0} localeCode="pt-BR" />;
-};
-
-interface BrazilCurrencyInputProps extends Omit<FormControlProps, 'type' | 'value' | 'onChange'> {
-    currency: number;
-    onChange: (value: number) => void;
+interface BrazilCurrencyInputProps<T extends object> extends Omit<FormControlProps, 'type'> {
+    value: number;
+    entity: T;
+    propName?: keyof T;
+    setEntity: (entity: T) => void;
 }
 
-const MaskBrazilCurrencyInput: React.FC<BrazilCurrencyInputProps> = ({ currency, onChange, ...props }) => {
-
-    let stringValue = currency.toString();
-
-    const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        stringValue = event.target.value;
-        const rawValue = event.target.value.replace(/[^\d,-]/g, '');
-        const numericValue = parseFloat(rawValue.replace(',', '.'));
-        onChange(numericValue);
-    };
-    
+const MaskBrazilCurrencyInput = <T extends object>({
+    value,
+    entity,
+    propName,
+    setEntity,
+    ...props
+}: BrazilCurrencyInputProps<T>): JSX.Element => {
     return (
-        <InputMask
-            name={`mask_${props.name}`}
-            mask="R$ 999.999.999,99"
-            placeholder="R$ 0,00"
-            value={stringValue}
-            onChange={handleChange}
-        >
-            {(_) => <Form.Control type='text' value={stringValue} {...props} onChange={handleChange} />}
-        </InputMask>
+        <CurrencyInput value={value} onChangeValue={(_event, originalValue, _maskedValue) => {
+            if (propName) {
+                setEntity({ ...entity, [propName]: originalValue });
+            }
+            else if (props.name) {
+                setEntity({ ...entity, [props.name]: originalValue });
+            }
+        }}
+            InputElement={<Form.Control placeholder="R$ 0,00" type="text" value={value} {...props}  />}
+        />
     )
 };
 
-export { FormatBrazilCurrency, FormatCurrency, MaskBrazilCurrencyInput };
+interface FormatDateProps {
+    value?: string | Date;
+}
+    
+const FormatDate: React.FC<FormatDateProps> = ({ value }) => {
+    if (typeof value === 'string') {
+        value = new Date(value);
+    }
+    const valorFormatado = value?.toLocaleDateString("pt-BR") ?? "-";
+
+    return <span>{valorFormatado}</span>;
+};
+
+export { FormatBrazilCurrency, MaskBrazilCurrencyInput, FormatDate };

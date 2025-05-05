@@ -5,6 +5,7 @@ import { Button, Table, Alert, Container, Row, Col, OverlayTrigger, Tooltip, For
 import axiosInstance from '../../axiosConfig';
 import { ApiResponse, ICategory } from 'budget-system-shared';
 import config from '../../config';
+import { FormatBrazilCurrency } from '../../components/Utils';
 
 const ListCategories: React.FC = () => {
     const [searchParams] = useSearchParams();
@@ -123,7 +124,7 @@ const ListCategories: React.FC = () => {
                             {categories.map((category) => (
                                 <tr key={category._id}>
                                     <td>{category.name}</td>
-                                    <td>${category.categoryBudget}</td>
+                                    <td><FormatBrazilCurrency currencyValue={category.categoryBudget} /></td>
                                     <td>{category.isActive ? "Yes" : "No"}</td>
                                     <td>
                                         {/* Botão de Visualizar */}

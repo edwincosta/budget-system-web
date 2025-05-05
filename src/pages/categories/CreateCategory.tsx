@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Button, Form, Container, Row, Col, Alert } from 'react-bootstrap';
 import axiosInstance from '../../axiosConfig';
 import { ApiResponse, ICategory } from 'budget-system-shared';
+import { MaskBrazilCurrencyInput } from '../../components/Utils';
 
 const CreateCategory: React.FC = () => {
     const [searchParams] = useSearchParams();
@@ -77,11 +78,11 @@ const CreateCategory: React.FC = () => {
                         </Form.Group>
                         <Form.Group className="mb-3">
                             <Form.Label>Budget</Form.Label>
-                            <Form.Control
-                                type="number"
+                            <MaskBrazilCurrencyInput
                                 name="categoryBudget"
                                 value={category.categoryBudget}
-                                onChange={handleInputChange}
+                                entity={category}
+                                setEntity={setCategory}
                                 required
                                 min="0"
                             />

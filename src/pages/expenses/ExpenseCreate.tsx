@@ -10,7 +10,7 @@ const ExpenseCreate: React.FC = () => {
     monthlyBudget: "",
     category: "",
     subcategory: "",
-    type: "Pessoal",
+    type: "Betel",
     amount: 0,
     description: "",
     date: new Date(),

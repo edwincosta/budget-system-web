@@ -5,6 +5,7 @@ import axiosInstance from '../../axiosConfig';
 import { ApiResponse, IMonthlyBudget, IMonthlyBudgetCategory, ICategory } from 'budget-system-shared';
 import config from '../../config';
 import { useAuth } from '../../context/AuthContext';
+import { MaskBrazilCurrencyInput } from '../../components/Utils';
 
 const EditBudget: React.FC = () => {
     const { user } = useAuth();
@@ -67,9 +68,9 @@ const EditBudget: React.FC = () => {
     }, [budgetId]);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-        if (!monthlyBudget) return;
         const { name, value } = e.target;
-        setMonthlyBudget({ ...monthlyBudget, [name]: name === 'budget' ? parseFloat(value) : value });
+        if (!monthlyBudget || name === 'budget') return;
+        setMonthlyBudget({ ...monthlyBudget, [name]: value });
     };
 
     const handleSave = async (e: React.FormEvent) => {
@@ -170,13 +171,12 @@ const EditBudget: React.FC = () => {
                             </Form.Group>
                             <Form.Group className="mb-3">
                                 <Form.Label>Budget</Form.Label>
-                                <Form.Control
-                                    type="number"
+                                <MaskBrazilCurrencyInput
                                     name="budget"
                                     value={monthlyBudget.budget}
-                                    onChange={handleInputChange}
+                                    entity={monthlyBudget}
+                                    setEntity={setMonthlyBudget}
                                     required
-                                    min="0"
                                 />
                             </Form.Group>
                             <Button variant="primary" type="submit" className="w-100">

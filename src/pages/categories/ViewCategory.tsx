@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Button, Table, Container, Row, Col, Alert } from 'react-bootstrap';
 import axiosInstance from '../../axiosConfig';
 import { ApiResponse, ICategory, ISubcategory } from 'budget-system-shared';
+import { FormatBrazilCurrency, FormatDate } from '../../components/Utils';
 
 const ViewCategory: React.FC = () => {
     const { categoryId } = useParams<{ categoryId: string }>();
@@ -73,7 +74,7 @@ const ViewCategory: React.FC = () => {
                                     </tr>
                                     <tr>
                                         <th>Budget</th>
-                                        <td>{category.categoryBudget}</td>
+                                        <td><FormatBrazilCurrency currencyValue={category.categoryBudget} /></td>
                                     </tr>
                                     <tr>
                                         <th>Status</th>
@@ -100,10 +101,10 @@ const ViewCategory: React.FC = () => {
                                     {subcategories.map((subcategory) => (
                                         <tr key={subcategory._id}>
                                             <td>{subcategory.name}</td>
-                                            <td>{subcategory.subcategoryBudget}</td>
+                                            <td><FormatBrazilCurrency currencyValue={subcategory.subcategoryBudget} /></td>
                                             <td>{subcategory.isActive ? 'Active' : 'Inactive'}</td>
                                             <td>{subcategory.updatedBy || 'N/A'}</td>
-                                            <td>{subcategory.updatedAt ? new Date(subcategory.updatedAt).toLocaleDateString() : 'N/A'}</td>
+                                            <td><FormatDate value={subcategory.updatedAt} /></td>
                                         </tr>
                                     ))}
                                 </tbody>

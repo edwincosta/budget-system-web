@@ -4,7 +4,7 @@ import { Button, Form, Container, Row, Col, Alert, Table, OverlayTrigger, Toolti
 import axiosInstance from '../../axiosConfig';
 import { ApiResponse, ISubcategory, ICategory } from 'budget-system-shared';
 import { FiEdit, FiPlus, FiTrash } from 'react-icons/fi';
-import { FormatBrazilCurrency } from '../../components/Utils';
+import { FormatBrazilCurrency, FormatDate, MaskBrazilCurrencyInput } from '../../components/Utils';
 
 
 const EditCategory: React.FC = () => {
@@ -63,15 +63,10 @@ const EditCategory: React.FC = () => {
     }, [categoryId]);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-        if (!category) return;
         const { name, value } = e.target;
-        setCategory({ ...category, [name]: name === 'categoryBudget' ? parseFloat(value) : value });
+        if (!category || name === 'categoryBudget') return;
+        setCategory({ ...category, [name]: value });
     };
-
-    // const handleChangeCategoryBudget = (value: number) => {
-    //     if (!category) return;
-    //     setCategory({ ...category, 'categoryBudget': value });
-    // };
 
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -171,16 +166,11 @@ const EditCategory: React.FC = () => {
 
     const handleInputChangeSubcategory = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
-        if (!category) return;
-        setNewSubcategory({ ...newSubcategory, [name]: name === 'subcategoryBudget' ? parseFloat(value) : value });
+        if (!category || name === 'subcategoryBudget') return;
+        setNewSubcategory({ ...newSubcategory, [name]: value });
     };
 
 
-    // const handleChangeSubcategoryBudget = (value: number) => {
-    //     setNewSubcategory({ ...newSubcategory, 'subcategoryBudget': value });
-    // };
-    
-    
     const setIsActive = async (isActive: boolean) => {
         category && setCategory({ ...category, isActive });
     }
@@ -216,21 +206,13 @@ const EditCategory: React.FC = () => {
                             </Form.Group>
                             <Form.Group className="mb-3">
                                 <Form.Label>Budget</Form.Label>
-                                <Form.Control
-                                    type="number"
+                                <MaskBrazilCurrencyInput
                                     name="categoryBudget"
                                     value={category.categoryBudget}
-                                    onChange={handleInputChange}
+                                    entity={category}
+                                    setEntity={setCategory}
                                     required
-                                    min={0}
                                 />
-                                {/* <MaskBrazilCurrencyInput
-                                    name="categoryBudget"
-                                    currency={category.categoryBudget}
-                                    onChange={handleChangeCategoryBudget}
-                                    required
-                                    
-                                /> */}
                             </Form.Group>
                             <Form.Group controlId='isActiveSwitch'>
                                 <Form.Switch
@@ -290,7 +272,7 @@ const EditCategory: React.FC = () => {
                                     <td><FormatBrazilCurrency currencyValue={subcat.subcategoryBudget}/></td>
                                     <td>{subcat.isActive ? 'Active' : 'Inactive'}</td>
                                     <td>{subcat.updatedBy || 'N/A'}</td>
-                                    <td>{subcat.updatedAt ? new Date(subcat.updatedAt).toLocaleDateString() : 'N/A'}</td>
+                                    <td><FormatDate value={subcat.updatedAt} /></td>
                                     <td>
                                         {/* Botão de Editar */}
                                         <OverlayTrigger
@@ -359,21 +341,14 @@ const EditCategory: React.FC = () => {
                         </Form.Group>
                         <Form.Group className="mb-3">
                             <Form.Label>Budget</Form.Label>
-                            <Form.Control
-                                    type="number"
+                            <MaskBrazilCurrencyInput
                                     name="subcategoryBudget"
                                     value={newSubcategory.subcategoryBudget}
-                                    onChange={handleInputChangeSubcategory}
+                                    entity={newSubcategory}
+                                    setEntity={setNewSubcategory}
                                     required
                                     min={0}
                                 />
-                            {/* <MaskBrazilCurrencyInput
-                                key={newSubcategory._id}
-                                name="subcategoryBudget"
-                                value={newSubcategory.subcategoryBudget}
-                                onChangeValue={handleChangeSubcategoryBudget}
-                                required
-                            /> */}
                         </Form.Group>
                         <Form.Group controlId='isActiveSwitch'>
                             <Form.Switch
